@@ -39,7 +39,7 @@ jobs:
           HUSKY: 0
 
       - name: Run linter
-        run: pnpm run lint
+        run: pnpm --ignore-workspace run lint
 
   typecheck:
     name: Typecheck
@@ -64,7 +64,7 @@ jobs:
           HUSKY: 0
 
       - name: Run TypeScript check
-        run: pnpm typecheck
+        run: pnpm --ignore-workspace typecheck
 
   audit:
     name: Dependency Audit
@@ -89,7 +89,7 @@ jobs:
           HUSKY: 0
 
       - name: Run pnpm audit
-        run: pnpm audit --audit-level=moderate
+        run: pnpm --ignore-workspace audit --audit-level=moderate
 
   trivy:
     name: Trivy Security Scan
@@ -147,4 +147,4 @@ jobs:
           HUSKY: 0
 
       - name: Build the project
-        run: pnpm build
+        run: pnpm --ignore-workspace build
