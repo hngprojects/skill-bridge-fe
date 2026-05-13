@@ -56,7 +56,7 @@ const HeroMobile = ({ onJoinClick }: HeroMobileProps) => {
           type="button"
           onClick={onJoinClick}
           size="lg"
-          className="mt-5 h-10 w-44.75 rounded-lg border-[0.6px] bg-primary-900 px-4 text-base font-semibold leading-5 text-primary-foreground hover:bg-primary-900/70"
+          className="mt-5 h-10 w-44.75 rounded-lg border-[0.6px] bg-primary-901 px-4 text-base font-semibold leading-5 text-primary-foreground hover:bg-primary-900/70"
         >
           Join the Waitlist
           <ArrowRight className="size-5" />

@@ -25,7 +25,7 @@ const SiteHeader = ({ onJoinClick }: Props) => {
         <Button
           type="button"
           onClick={onJoinClick}
-          className="h-9 rounded-md border bg-primary-900 px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-900/70 sm:h-10 sm:rounded-lg sm:border-[0.6px] sm:px-4 sm:text-base"
+          className="h-9 rounded-md border bg-[#0D2025] px-3 text-xs font-semibold text-primary-foreground hover:bg-[#0D2025]/70 sm:h-10 sm:rounded-lg sm:border-[0.6px] sm:px-4 sm:text-base"
         >
           Join the Waitlist
         </Button>
