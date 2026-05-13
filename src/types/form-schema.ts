@@ -63,14 +63,6 @@ export type TalentSignup = Pick<
   "firstName" | "lastName" | "email"
 >;
 
-/** Minimal employer lead capture */
-export const employerLeadSignupSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.email("Invalid work email"),
-});
-
-export type EmployerLeadSignupValues = z.infer<typeof employerLeadSignupSchema>;
-
 export const emailVerificationCodeSchema = z.object({
   code: z.string().regex(/^\d{6}$/, "Enter the 6-digit confirmation code."),
 });
@@ -79,19 +71,31 @@ export type EmailVerificationCodeValues = z.infer<
   typeof emailVerificationCodeSchema
 >;
 
-export const employerSignupFinalSchema = z.object({
-  fullName: z.string().trim().min(1, "Full name is required."),
-  email: z.string().email("Please enter a valid email address."),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters.")
-    .regex(/[A-Z]/, "Password must include at least one uppercase letter.")
-    .regex(/[a-z]/, "Password must include at least one lowercase letter.")
-    .regex(/[0-9]/, "Password must include at least one number."),
-});
+export const employerSignupFinalSchema = z
+  .object({
+    firstName: z.string().trim().min(1, "First name is required."),
+    lastName: z.string().trim().min(1, "Last name is required."),
+    email: z.string().email("Please enter a valid work email address."),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters.")
+      .regex(/[A-Z]/, "Password must include at least one uppercase letter.")
+      .regex(/[a-z]/, "Password must include at least one lowercase letter.")
+      .regex(/[0-9]/, "Password must include at least one number."),
+    confirmPassword: z.string().min(1, "Confirm your password."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match.",
+    path: ["confirmPassword"],
+  });
 
 export type EmployerSignupFinalValues = z.infer<
   typeof employerSignupFinalSchema
+>;
+
+export type EmployerSignup = Pick<
+  EmployerSignupFinalValues,
+  "firstName" | "lastName" | "email"
 >;
 
 export const contactFormSchema = z.object({

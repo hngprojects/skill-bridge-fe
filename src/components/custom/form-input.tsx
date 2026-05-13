@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -21,29 +21,28 @@ import type {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Figma: Input with label — gap 6px; label Body/2; field Body/1; border 0.5px #94A3B8; radius 8px */
 const formFieldRootClass = "flex w-full flex-col items-stretch gap-1.5";
 
 const formFieldLabelClass =
-  "inline-flex flex-row items-start gap-0.5 p-0 font-normal shadow-none select-none " +
-  "[font-family:var(--font-outfit),sans-serif] text-sm leading-[18px] tracking-[0.016em] text-[#334155]";
+  "inline-flex flex-row items-start gap-0.5 p-0 shadow-none select-none " +
+  "font-sans text-base font-medium leading-normal tracking-[0.256px] text-foreground";
 
-const formFieldAsteriskClass =
-  "[font-family:var(--font-outfit),sans-serif] text-sm font-normal leading-[18px] tracking-[0.016em] text-[#B01E1E]";
+// const formFieldAsteriskClass =
+//   "font-sans text-base font-medium leading-normal tracking-[0.256px] text-error";
 
 const formFieldControlClass =
-  "h-9 w-full min-w-0 rounded-lg border-[0.5px] border-[#94A3B8] bg-white px-3 py-2 text-base font-normal leading-5 tracking-[0.017em] md:text-base md:leading-5 " +
-  "text-[#0D2025] shadow-none outline-none transition-[color,box-shadow,border-color] " +
-  "[font-family:var(--font-outfit),sans-serif] placeholder:text-[#717680] " +
-  "focus-visible:border-[#5A9CB6] focus-visible:ring-2 focus-visible:ring-[#5A9CB6]/25 " +
+  "h-9 w-full min-w-0 rounded-[5px] border border-border bg-background px-3 py-2 text-base font-normal leading-5 tracking-[0.017em] md:text-base md:leading-5 " +
+  "text-foreground shadow-none outline-none transition-[color,box-shadow,border-color] " +
+  "font-sans placeholder:text-muted-foreground " +
+  "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 " +
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 " +
-  "aria-invalid:border-[#B01E1E] aria-invalid:ring-2 aria-invalid:ring-[#B01E1E]/20";
+  "aria-invalid:border-error aria-invalid:ring-2 aria-invalid:ring-error/20";
 
 const formFieldHintClass =
-  "[font-family:var(--font-outfit),sans-serif] text-sm font-normal leading-[18px] tracking-[0.016em] text-[#535862]";
+  "font-sans text-sm font-normal leading-[18px] tracking-[0.016em] text-muted-foreground";
 
 const formFieldErrorClass =
-  "[font-family:var(--font-outfit),sans-serif] text-sm font-normal leading-[18px] text-[#B01E1E]";
+  "font-sans text-sm font-normal leading-[18px] text-error";
 
 function FormInput(props: FormInputProps) {
   const {
@@ -56,6 +55,7 @@ function FormInput(props: FormInputProps) {
     error,
     className,
     icon,
+    success,
   } = props;
 
   const [internalError, setInternalError] = React.useState<string>("");
@@ -96,7 +96,6 @@ function FormInput(props: FormInputProps) {
       <div className={cn(formFieldRootClass, className)}>
         <Label htmlFor={inputId} className={formFieldLabelClass}>
           {label}
-          {required ? <span className={formFieldAsteriskClass}>*</span> : null}
         </Label>
         <Select
           value={props.value}
@@ -113,8 +112,10 @@ function FormInput(props: FormInputProps) {
             }
             className={cn(
               formFieldControlClass,
+              success &&
+                "border-success focus-visible:border-success focus-visible:ring-success/25",
               "flex w-full items-center justify-between gap-2 whitespace-nowrap md:text-base",
-              "data-placeholder:text-[#717680]",
+              "data-placeholder:text-muted-foreground",
             )}
           >
             <SelectValue placeholder={placeholder ?? "Select an option"} />
@@ -148,6 +149,7 @@ function FormInput(props: FormInputProps) {
     icon: _icon,
     description: _description,
     error: _error,
+    success: _success,
     ...rest
   }: InputModeProps) => {
     void _mode;
@@ -156,6 +158,7 @@ function FormInput(props: FormInputProps) {
     void _icon;
     void _description;
     void _error;
+    void _success;
     return rest;
   })(props);
 
@@ -163,12 +166,11 @@ function FormInput(props: FormInputProps) {
     <div className={cn(formFieldRootClass, className)}>
       <Label htmlFor={inputId} className={formFieldLabelClass}>
         {label}
-        {required ? <span className={formFieldAsteriskClass}>*</span> : null}
       </Label>
 
       <div className="relative flex w-full flex-row items-center">
         {icon ? (
-          <span className="pointer-events-none absolute top-1/2 left-3 flex size-5 -translate-y-1/2 items-center justify-center text-[#717680] [&_svg]:size-5">
+          <span className="pointer-events-none absolute top-1/2 left-3 flex size-5 -translate-y-1/2 items-center justify-center text-muted-foreground [&_svg]:size-5">
             {icon}
           </span>
         ) : null}
@@ -186,9 +188,13 @@ function FormInput(props: FormInputProps) {
           }
           className={cn(
             formFieldControlClass,
-            "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[#0D2025]",
+            "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
             icon ? "pl-10" : "",
-            props.type === "password" ? "pr-10" : "",
+            props.type === "password"
+              ? hasError || success
+                ? "pr-20"
+                : "pr-10"
+              : "",
             inputProps.className,
           )}
           onBlur={(event) => {
@@ -198,23 +204,36 @@ function FormInput(props: FormInputProps) {
         />
 
         {props.type === "password" ? (
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-3 flex size-9 items-center justify-center text-[#717680] transition-colors hover:text-[#0D2025]"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <EyeOff className="size-5" />
-            ) : (
-              <Eye className="size-5" />
-            )}
-          </button>
+          <div className="absolute inset-y-0 right-3 flex items-center gap-1">
+            {hasError ? (
+              <AlertCircle
+                className="size-4 text-error-foreground"
+                aria-hidden="true"
+              />
+            ) : success ? (
+              <Check className="size-4 text-success" aria-hidden="true" />
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="flex size-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="size-5" />
+              ) : (
+                <Eye className="size-5" />
+              )}
+            </button>
+          </div>
         ) : null}
       </div>
 
       {description && !displayError ? (
-        <p id={descriptionId} className={formFieldHintClass}>
+        <p
+          id={descriptionId}
+          className={cn(formFieldHintClass, success && "text-success")}
+        >
           {description}
         </p>
       ) : null}
