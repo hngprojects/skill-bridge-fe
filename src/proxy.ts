@@ -1,4 +1,6 @@
-import { NextResponse, type NextProxy } from "next/server";
+import { NextResponse } from "next/server";
+
+import { auth } from "@/auth";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
@@ -7,9 +9,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
 
-export const proxy: NextProxy = (request) => {
-  const requestId =
-    request.headers.get("x-request-id") ?? crypto.randomUUID();
+export default auth((request) => {
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
@@ -24,7 +25,7 @@ export const proxy: NextProxy = (request) => {
   response.headers.set("x-request-id", requestId);
 
   return response;
-};
+});
 
 export const config = {
   matcher: [
