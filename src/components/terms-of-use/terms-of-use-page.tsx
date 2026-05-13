@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { termsOfUseData, termsOfUseNav } from "@/constants/terms-of-use";
-import JumpToSelect from "@/components/termsofuse/jump-to-select";
+import JumpToSelect from "@/components/terms-of-use/jump-to-select";
 
 const jumpToItems = termsOfUseData.map((section, index) => ({
   id: `term-${index + 1}`,

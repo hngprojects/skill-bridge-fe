@@ -10,7 +10,7 @@ import SocialFooter from "./social-footer";
 import TextInput from "./text-input";
 import { addToWaitlistSchema } from "@/types/waitlist";
 import { roles, sources } from "./data";
-import { addToWaitlist } from "@/app/actions/waitlist.actions";
+import { addToWaitlist } from "@/actions/waitlist.actions";
 
 const FormStep = ({
   onSubmit,
