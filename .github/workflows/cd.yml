@@ -1,0 +1,137 @@
+name: Frontend CD
+
+on:
+  push:
+    branches: [dev, staging, main]
+
+concurrency:
+  group: frontend-cd-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: 9
+
+jobs:
+  ci:
+    name: CI checks
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy to ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    needs: ci
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Set deploy target
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ]; then
+            echo "dir=dev" >> "$GITHUB_OUTPUT"
+            echo "app=skillbridge-fe-dev" >> "$GITHUB_OUTPUT"
+            echo "port=3000" >> "$GITHUB_OUTPUT"
+            echo "branch=dev" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" = "staging" ]; then
+            echo "dir=staging" >> "$GITHUB_OUTPUT"
+            echo "app=skillbridge-fe-staging" >> "$GITHUB_OUTPUT"
+            echo "port=4000" >> "$GITHUB_OUTPUT"
+            echo "branch=staging" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            echo "dir=production" >> "$GITHUB_OUTPUT"
+            echo "app=skillbridge-fe-prod" >> "$GITHUB_OUTPUT"
+            echo "port=5000" >> "$GITHUB_OUTPUT"
+            echo "branch=main" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unknown branch '${{ github.ref_name }}' — expected 'dev', 'staging', or 'main'"
+            exit 1
+          fi
+
+      - name: Compose .env from GitHub Environment
+        env:
+          PORT: ${{ steps.target.outputs.port }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_APP_NAME: ${{ vars.NEXT_PUBLIC_APP_NAME }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_LINKEDIN_ID: ${{ secrets.AUTH_LINKEDIN_ID }}
+          AUTH_LINKEDIN_SECRET: ${{ secrets.AUTH_LINKEDIN_SECRET }}
+          AUTH_URL: ${{ secrets.AUTH_URL }}
+        run: |
+          : "${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL is required in the dev GitHub Environment}"
+          : "${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL is required in the dev GitHub Environment}"
+          : "${AUTH_SECRET:?AUTH_SECRET is required in the dev GitHub Environment}"
+          : "${AUTH_URL:?AUTH_URL is required in the dev GitHub Environment}"
+          python3 << 'PY'
+          import os
+
+          gh_env = os.environ["GITHUB_ENV"]
+          pairs = [
+              ("NODE_ENV", "production"),
+              ("PORT", os.environ["PORT"]),
+              ("NEXT_PUBLIC_APP_URL", os.environ.get("NEXT_PUBLIC_APP_URL", "")),
+              ("NEXT_PUBLIC_APP_NAME", os.environ.get("NEXT_PUBLIC_APP_NAME", "")),
+              ("NEXT_PUBLIC_API_URL", os.environ.get("NEXT_PUBLIC_API_URL", "")),
+              ("AUTH_SECRET", os.environ.get("AUTH_SECRET", "")),
+              ("AUTH_URL", os.environ.get("AUTH_URL", "")),
+              ("AUTH_GOOGLE_ID", os.environ.get("AUTH_GOOGLE_ID", "")),
+              ("AUTH_GOOGLE_SECRET", os.environ.get("AUTH_GOOGLE_SECRET", "")),
+              ("AUTH_LINKEDIN_ID", os.environ.get("AUTH_LINKEDIN_ID", "")),
+              ("AUTH_LINKEDIN_SECRET", os.environ.get("AUTH_LINKEDIN_SECRET", "")),
+          ]
+          content = "\n".join(f"{k}={v}" for k, v in pairs) + "\n"
+          delim = "__SB_FE_DOTENV__"
+          with open(gh_env, "a", encoding="utf-8") as f:
+              f.write(f"DOTENV<<{delim}\n")
+              f.write(content)
+              f.write(f"{delim}\n")
+          print(f"Composed .env payload ({len(content)} chars)")
+          PY
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          DOTENV: ${{ env.DOTENV }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          envs: DOTENV
+          script: |
+            set -e
+
+            DEPLOY_DIR="$HOME/skillbridge/frontend/${{ steps.target.outputs.dir }}"
+            APP_NAME="${{ steps.target.outputs.app }}"
+            BRANCH="${{ steps.target.outputs.branch }}"
+            PORT="${{ steps.target.outputs.port }}"
+            REPO="https://github.com/${{ github.repository }}.git"
+
+            if [ -z "$DOTENV" ]; then
+              echo "FATAL: composed .env payload is empty"
+              exit 1
+            fi
+
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            if [ ! -d ".git" ]; then
+              git clone --branch "$BRANCH" "$REPO" .
+            else
+              git fetch origin "$BRANCH"
+              git reset --hard "origin/$BRANCH"
+            fi
+
+            printf '%s\n' "$DOTENV" > .env
+            chmod 600 .env
+
+            pnpm install --frozen-lockfile --ignore-workspace
+            pnpm --ignore-workspace build
+
+            if pm2 describe "$APP_NAME" > /dev/null 2>&1; then
+              pm2 reload "$APP_NAME" --update-env
+            else
+              pm2 start node_modules/next/dist/bin/next --name "$APP_NAME" -- start -p "$PORT"
+            fi
+            pm2 save
