@@ -1,7 +1,7 @@
-import React from "react";
+import TermsOfUsePage from "@/components/termsofuse/terms-of-use-page";
 
-const TermsOfUsePage = () => {
-  return <div>Terms of Use</div>;
+const Page = () => {
+  return <TermsOfUsePage />;
 };
 
-export default TermsOfUsePage;
+export default Page;
