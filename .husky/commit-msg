@@ -1,0 +1,19 @@
+if ! npx --no-install commitlint --edit "$1"; then
+  echo ""
+  echo "[commit-msg] Commit message does not follow Conventional Commits."
+  echo ""
+  echo "  Format:   <type>(<optional scope>): <subject>"
+  echo ""
+  echo "  Allowed types:"
+  echo "    feat, fix, docs, chore, style, refactor,"
+  echo "    ci, test, revert, perf, vercel"
+  echo ""
+  echo "  Examples:"
+  echo "    feat: add candidate score export"
+  echo "    fix(auth): handle expired refresh tokens"
+  echo "    docs: update README with setup steps"
+  echo ""
+  echo "  Spec: https://www.conventionalcommits.org"
+  echo ""
+  exit 1
+fi

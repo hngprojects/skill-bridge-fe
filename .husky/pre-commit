@@ -1,0 +1,19 @@
+if ! npx lint-staged; then
+  echo ""
+  echo "[pre-commit] Lint or formatting check failed."
+  echo ""
+  echo "  - Review the errors reported above."
+  echo "  - Re-run manually with:  npx lint-staged"
+  echo ""
+  exit 1
+fi
+
+if ! pnpm typecheck; then
+  echo ""
+  echo "[pre-commit] TypeScript type check failed."
+  echo ""
+  echo "  - Fix the type errors reported above before committing."
+  echo "  - Re-run manually with:  pnpm typecheck"
+  echo ""
+  exit 1
+fi
