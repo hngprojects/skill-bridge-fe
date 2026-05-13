@@ -126,7 +126,7 @@ jobs:
             printf '%s\n' "$DOTENV" > .env
             chmod 600 .env
 
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-workspace
             pnpm build
 
             if pm2 describe "$APP_NAME" > /dev/null 2>&1; then
