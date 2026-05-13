@@ -63,7 +63,7 @@ function AuthShell({
 
         <main
           className={cn(
-            "flex w-full min-h-0 flex-1 flex-col justify-center px-4 py-6 sm:px-6 sm:py-8 lg:py-10",
+            "flex w-full min-h-0 flex-1 flex-col justify-center-safe px-4 py-6 sm:px-6 sm:py-8 lg:py-10",
             mainClassName,
           )}
         >
@@ -71,7 +71,7 @@ function AuthShell({
         </main>
       </div>
 
-      {simpleFooter ? (
+      {simpleFooter && (
         <footer className="w-full bg-[#05060F] z-20">
           <div
             className={cn(
@@ -105,37 +105,6 @@ function AuthShell({
             </div>
           </div>
         </footer>
-      ) : (
-        <div className="relative -mt-70 hidden h-80 w-full shrink-0 overflow-hidden sm:block">
-          <div className="absolute inset-x-0 bottom-0 z-0 h-70">
-            <Image
-              src="/assets/images/footer-assets.svg"
-              alt=""
-              fill
-              className="pointer-events-none select-none object-contain object-bottom"
-              priority={false}
-            />
-          </div>
-          <div className="absolute bottom-0 left-0 z-10 w-full">
-            <svg
-              viewBox="0 0 1440 180"
-              fill="none"
-              className="w-full"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0 180C240 60 1200 60 1440 180V180H0V150Z"
-                fill="var(--color-background)"
-              />
-              <rect
-                y="179"
-                width="1440"
-                height="100"
-                fill="var(--color-background)"
-              />
-            </svg>
-          </div>
-        </div>
       )}
     </div>
   );

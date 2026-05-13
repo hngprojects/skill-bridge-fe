@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { env } from "@/env/client";
@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
-const outfit = Outfit({
+const plusJakartaOutfit = Plus_Jakarta_Sans({
   variable: "--font-outfit",
   subsets: ["latin"],
 });
@@ -37,7 +37,7 @@ export default function RootLayout({
         "antialiased",
         "font-sans",
         plusJakartaSans.variable,
-        outfit.variable,
+        plusJakartaOutfit.variable,
       )}
     >
       <body className="min-h-full flex flex-col">

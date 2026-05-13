@@ -169,7 +169,7 @@ function TalentSignupForm() {
         {isSubmitting ? "Creating account..." : "Sign Up"}
       </Button>
 
-      <div className="relative my-2 flex items-center gap-4" role="separator">
+      <div className="relative flex items-center gap-4" role="separator">
         <div className="h-px flex-1 bg-border" />
         <span className="body-2 shrink-0 text-muted-foreground">or</span>
         <div className="h-px flex-1 bg-border" />
@@ -177,7 +177,7 @@ function TalentSignupForm() {
 
       <GoogleButton onClick={() => void onGoogleSignIn()} />
 
-      <p className="body-2 mt-4 text-center font-light text-muted-foreground">
+      <p className="body-2 text-center font-light text-muted-foreground">
         Already have an account? Click{" "}
         <Link
           href="/login"
