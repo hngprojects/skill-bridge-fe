@@ -1,16 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type {
-  EmployerLeadSignupValues,
-  TalentSignup,
-} from "@/types/form-schema";
+import type { EmployerSignup, TalentSignup } from "@/types/form-schema";
 
 type SignupFlowState = {
   talentSignup: TalentSignup | null;
-  employerLead: EmployerLeadSignupValues | null;
+  employerLead: EmployerSignup | null;
   setTalentSignup: (signup: TalentSignup) => void;
-  setEmployerLead: (lead: EmployerLeadSignupValues) => void;
+  setEmployerLead: (lead: EmployerSignup) => void;
   clearTalentSignup: () => void;
   clearEmployerLead: () => void;
 };

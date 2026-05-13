@@ -2,6 +2,7 @@ import axios, {
   type AxiosError,
   type AxiosInstance,
   type CreateAxiosDefaults,
+  type InternalAxiosRequestConfig,
 } from "axios";
 
 import { env } from "@/env/client";
@@ -17,7 +18,14 @@ export class ApiError extends Error {
   }
 }
 
+export function authFailureMessage(error: unknown): string {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error) return error.message;
+  return "Something went wrong. Please try again.";
+}
+
 function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) return error;
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message?: string }>;
     const message =
@@ -44,19 +52,37 @@ function attachErrorInterceptor(instance: AxiosInstance) {
   return instance;
 }
 
+type RetriableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
+let refreshRequest: Promise<unknown> | null = null;
+
+function isAuthRefreshRequest(config: InternalAxiosRequestConfig | undefined) {
+  return config?.url?.includes("/auth/refresh") ?? false;
+}
+
+function normalizeToken(token: string | undefined): string | undefined {
+  if (!token || token === "undefined") return undefined;
+  return token;
+}
+
 async function getAuthToken(): Promise<string | undefined> {
   if (typeof window === "undefined") {
     const { auth } = await import("@/auth");
     const session = await auth();
-    return session?.accessToken;
+    return normalizeToken(session?.accessToken);
   }
   const { getSession } = await import("next-auth/react");
   const session = await getSession();
-  return session?.accessToken;
+  return normalizeToken(session?.accessToken);
 }
 
 const baseConfig = {
-  baseURL: env.NEXT_PUBLIC_API_URL,
+  baseURL:
+    typeof window === "undefined" ? env.NEXT_PUBLIC_API_URL : "/api/proxy-v1",
+  /** Send cookies for refresh / logout / cookie-based session with the API. */
+  withCredentials: true,
   headers: {
     Accept: "application/json, multipart/form-data",
   },
@@ -64,7 +90,7 @@ const baseConfig = {
 
 export const publicApi = attachErrorInterceptor(axios.create(baseConfig));
 
-export const authApi = attachErrorInterceptor(axios.create(baseConfig));
+export const authApi = axios.create(baseConfig);
 
 authApi.interceptors.request.use(async (config) => {
   const token = await getAuthToken();
@@ -73,3 +99,41 @@ authApi.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+authApi.interceptors.response.use(
+  (response) => response,
+  async (error: unknown) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject(error);
+    }
+
+    const originalRequest = error.config as RetriableRequestConfig | undefined;
+    const shouldRefresh =
+      error.response?.status === 401 &&
+      originalRequest != null &&
+      !originalRequest._retry &&
+      !isAuthRefreshRequest(originalRequest);
+
+    if (!shouldRefresh) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      refreshRequest ??= publicApi.post("/auth/refresh").finally(() => {
+        refreshRequest = null;
+      });
+      await refreshRequest;
+      return authApi(originalRequest);
+    } catch (refreshError) {
+      if (typeof window !== "undefined") {
+        const { signOut } = await import("next-auth/react");
+        await signOut({ callbackUrl: "/login" });
+      }
+      return Promise.reject(refreshError);
+    }
+  },
+);
+
+attachErrorInterceptor(authApi);

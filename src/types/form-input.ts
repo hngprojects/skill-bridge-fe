@@ -15,10 +15,10 @@ type BaseProps = {
   placeholder?: string;
   description?: string;
   error?: string;
+  success?: boolean;
   className?: string;
   icon?: React.ReactNode;
 };
-
 export type InputModeProps = BaseProps & {
   mode?: "input";
   type?: "text" | "email" | "password";

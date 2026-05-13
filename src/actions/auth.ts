@@ -1,6 +1,5 @@
 import { env } from "@/env/client";
 import { publicApi, authApi } from "@/lib/api";
-import { splitFullName } from "@/lib/utils";
 import type {
   ApiEnvelope,
   EmptyData,
@@ -30,18 +29,17 @@ export function getLinkedInOAuthUrl(): string {
   return `${apiRoot()}/auth/linkedin`;
 }
 
-/** POST /auth/register body from employer screens that use a single fullName field. */
 export function employerRegisterBody(input: {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }): RegisterInput {
-  const { firstName, lastName } = splitFullName(input.fullName);
   return {
     email: input.email.trim(),
     password: input.password,
-    firstName,
-    lastName,
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
     role: "employer",
   };
 }
